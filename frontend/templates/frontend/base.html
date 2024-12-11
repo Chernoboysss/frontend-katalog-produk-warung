@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WarungXplore</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'logo-warung.jpg' %}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    {% load static %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="/">WarungXplore</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <!-- Tombol Login yang akan disembunyikan jika sudah login -->
+                <li class="nav-item" id="login-item">
+                    <a class="nav-link" href="{% url 'login' %}" id="login-link">Login</a>
+                </li>
+
+                <!-- Tombol Dashboard dan Logout yang akan disembunyikan jika belum login -->
+                <li class="nav-item" id="dashboard-item" style="display: none;">
+                    <a class="nav-link" href="{% url 'dashboard' %}" id="dashboard-link">Dashboard</a>
+                </li>
+                <li class="nav-item" id="logout-item" style="display: none;">
+                    <a class="nav-link" href="javascript:void(0)" id="logout-link">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Fungsi untuk memeriksa status login berdasarkan token yang ada di localStorage
+        function checkLoginStatus() {
+            const token = localStorage.getItem('token');  // Ambil token dari localStorage
+            if (token) {
+                console.log('Token is valid');
+                document.getElementById('login-item').style.display = 'none';  // Sembunyikan tombol login
+                document.getElementById('dashboard-item').style.display = 'inline';  // Tampilkan dashboard
+                document.getElementById('logout-item').style.display = 'inline';  // Tampilkan logout
+            } else {
+                console.log('Token is invalid');
+                document.getElementById('login-item').style.display = 'inline';  // Tampilkan tombol login
+                document.getElementById('dashboard-item').style.display = 'none';  // Sembunyikan dashboard
+                document.getElementById('logout-item').style.display = 'none';  // Sembunyikan logout
+            }
+        }
+
+        // Cek status login setiap kali halaman dimuat
+        checkLoginStatus();
+
+        // Logout handler
+        document.getElementById('logout-link')?.addEventListener('click', () => {
+            localStorage.removeItem('token');  // Hapus token dari localStorage
+            window.location.reload();  // Reload halaman untuk memperbarui status login
+        });
+    </script>
+</body>
+</html>

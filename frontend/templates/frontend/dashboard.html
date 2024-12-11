@@ -1,0 +1,383 @@
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Dashboard Produk</h1>
+
+
+     <!-- Filtering Produk -->
+     <div class="mb-3">
+        <input type="text" id="filter-name" class="form-control" placeholder="Filter berdasarkan Nama Produk">
+    </div>
+
+    <button class="btn btn-success mb-3" data-toggle="modal" data-target="#addProductModal">Tambah Produk</button>
+    
+    <!-- Tabel Produk -->
+    <table class="table table-bordered" id="products-table">
+        <thead>
+            <tr>
+                <th>No</th>
+                {% comment %} <th>ID</th> {% endcomment %}
+                <th>Nama Produk</th>
+                <th>Description</th>
+                <th>Harga</th>
+                <th>Qty</th>
+                <th>Gambar</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="products-body">
+            <!-- Data Produk akan dimuat di sini -->
+        </tbody>
+    </table>
+
+    <!-- Button untuk Menambah Produk -->
+
+    <!-- Modal untuk Menambahkan Produk -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProductModalLabel">Tambah Produk</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-product-form">
+                        <div class="form-group">
+                            <label for="product-name">Nama Produk</label>
+                            <input type="text" class="form-control" id="product-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-price">Harga</label>
+                            <input type="number" class="form-control" id="product-price" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-description">description</label>
+                            <input type="text" class="form-control" id="product-description" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-qty">Qty</label>
+                            <input type="number" class="form-control" id="product-qty" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-image">Gambar</label>
+                            <input type="file" class="form-control" id="product-image" required>
+                        </div>                        
+                        <button type="submit" class="btn btn-primary">Tambah Produk</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Modal untuk Edit Produk -->
+<div class="modal fade" id="editProductModal" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">Edit Produk</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-product-form">
+                    <input type="hidden" id="edit-product-id">
+                    <div class="form-group">
+                        <label for="edit-product-name">Nama Produk</label>
+                        <input type="text" class="form-control" id="edit-product-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-product-price">Harga</label>
+                        <input type="number" class="form-control" id="edit-product-price" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-product-description">Deskripsi</label>
+                        <input type="text" class="form-control" id="edit-product-description" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-product-qty">Qty</label>
+                        <input type="number" class="form-control" id="edit-product-qty" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-product-image">Gambar</label>
+                        <input type="file" class="form-control" id="edit-product-image">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Modal untuk Detail Produk -->
+    <div class="modal fade" id="productDetailModal" tabindex="-1" role="dialog" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productDetailModalLabel">Detail Produk</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="product-detail-body">
+                    <!-- Detail Produk akan ditampilkan di sini -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cek jika token ada di localStorage
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = "{% url 'login' %}";  // Redirect ke halaman login jika tidak ada token
+    }
+
+// Fungsi untuk melakukan filtering berdasarkan Nama Produk
+document.getElementById('filter-name').addEventListener('input', function () {
+    const filterValue = this.value.toLowerCase(); // Ambil nilai filter dan ubah ke huruf kecil
+    const rows = document.querySelectorAll('#products-body tr'); // Ambil semua baris produk
+
+    rows.forEach(row => {
+        const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase(); // Ambil Nama Produk
+        if (productName.includes(filterValue)) {
+            row.style.display = ''; // Tampilkan baris jika cocok
+        } else {
+            row.style.display = 'none'; // Sembunyikan baris jika tidak cocok
+        }
+    });
+});
+
+   // Ambil data produk dan tampilkan dalam tabel
+async function loadProducts() {
+    const response = await fetch('http://localhost:3000/products', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,  // Gunakan token yang tersimpan di localStorage
+        }
+    });
+
+    // Cek apakah response berhasil
+    if (response.ok) {
+        const data = await response.json();
+        const products = data.products;
+
+        const productsBody = document.getElementById('products-body');
+        productsBody.innerHTML = '';  // Kosongkan tabel sebelum mengisi data baru
+
+        // Loop untuk menampilkan setiap produk dalam tabel
+        products.forEach((product,index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>  
+                {% comment %} <td>${product.id}</td> {% endcomment %}
+                <td>${product.name}</td>
+                <td>${product.description}</td>
+                <td>${product.price}</td>
+                <td>${product.qty}</td>
+                <img src="http://localhost:3000${product.image}" alt="${product.image}" width="80" height="60">
+                <td>
+                    <button class="btn btn-info" onclick="viewProduct(${product.id})">View Detail</button>
+                    <button class="btn btn-warning" onclick="editProduct(${product.id})">Edit</button>
+                    <button class="btn btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
+                </td>
+            `;
+            productsBody.appendChild(row);
+        });
+    } else {
+        alert('Gagal memuat data produk');
+    }
+}
+
+document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Cegah reload halaman
+
+    const name = document.getElementById('product-name').value;
+    const price = document.getElementById('product-price').value;
+    const description = document.getElementById('product-description').value;
+    const qty = document.getElementById('product-qty').value;
+    const imageInput = document.getElementById('product-image').files[0]; // Ambil file gambar
+    
+    const formData = new FormData();
+    formData.append("image", imageInput); // Sertakan file gambar
+    formData.append("productName", name); // Sertakan nama produk
+    formData.append("productId", new Date().getTime()); // Gunakan ID unik (misalnya timestamp)
+    
+    // Upload gambar
+    const imageUploadResponse = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    
+    if (!imageUploadResponse.ok) {
+        alert('Gagal mengupload gambar');
+        return;
+    }
+
+    const { filePath } = await imageUploadResponse.json();
+
+    if (!filePath) {
+        alert('Gagal mendapatkan path gambar');
+        return;
+    }
+
+    // Tambahkan userId (harus diambil dari sistem Anda)
+    const userId = 1; // Contoh saja, sesuaikan implementasinya
+
+    const productData = {
+        name,
+        price: parseFloat(price),
+        description,
+        qty: parseInt(qty, 10),
+        image: filePath,
+        userId,
+    };
+    
+
+    const productResponse = await fetch('http://localhost:3000/products', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(productData),
+    });
+
+    if (productResponse.ok) {
+        $('#addProductModal').modal('hide'); // Tutup modal
+        loadProducts(); // Muat ulang daftar produk
+    } else {
+        const error = await productResponse.json();
+        alert(`Gagal menambah produk: ${error.message}`);
+    }
+});
+
+
+    // Fungsi untuk melihat detail produk
+    async function viewProduct(id) {
+        const response = await fetch(`http://localhost:3000/products/${id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const product = await response.json();
+        const data = product.product
+        const detailBody = document.getElementById('product-detail-body');
+        detailBody.innerHTML = `
+            <img src="http://localhost:3000${data.image}" alt="${data.image}" width="150" height="100">
+            <h5>Nama Produk: ${data.name}</h5>
+            <p>Harga: ${data.price}</p>
+            <p>Qty : ${data.qty} </p>
+            <p>description : ${data.description} </p>
+        `;
+
+        $('#productDetailModal').modal('show');
+    }
+
+    // Fungsi untuk mengedit produk
+    async function editProduct(id) {
+        const response = await fetch(`http://localhost:3000/products/${id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const product = await response.json();
+        const data = product.product
+        document.getElementById('edit-product-id').value = data.id;
+        document.getElementById('edit-product-name').value = data.name;
+        document.getElementById('edit-product-price').value = data.price;
+        document.getElementById('edit-product-description').value = data.description;
+        document.getElementById('edit-product-qty').value = data.qty;
+
+        $('#editProductModal').modal('show');
+    }
+
+    document.getElementById('edit-product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+    
+        const id = document.getElementById('edit-product-id').value;
+        const name = document.getElementById('edit-product-name').value;
+        const price = document.getElementById('edit-product-price').value;
+        const qty = document.getElementById('edit-product-qty').value;
+        const description = document.getElementById('edit-product-description').value;
+        const imageInput = document.getElementById('edit-product-image').files[0];
+    
+        let filePath = null;
+    
+        if (imageInput) {
+            const formData = new FormData();
+            formData.append("image", imageInput);
+    
+            const imageUploadResponse = await fetch('http://localhost:3000/upload', {
+                method: 'POST',
+                body: formData,
+            });
+    
+            if (imageUploadResponse.ok) {
+                const data = await imageUploadResponse.json();
+                filePath = data.filePath;
+            } else {
+                alert('Gagal mengupload gambar');
+                return;
+            }
+        }
+    
+        const productData = {
+            name,
+            price: parseFloat(price),
+            qty: parseInt(qty, 10),
+            description,
+            image: filePath,
+        };
+    
+        const response = await fetch(`http://localhost:3000/products/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(productData),
+        });
+    
+        if (response.ok) {
+            $('#editProductModal').modal('hide');
+            loadProducts();
+        } else {
+            const error = await response.json();
+            alert(`Gagal mengedit produk: ${error.error}`);
+        }
+    });
+    
+    
+    
+
+    // Fungsi untuk menghapus produk
+    async function deleteProduct(id) {
+        const response = await fetch(`http://localhost:3000/products/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.ok) {
+            loadProducts();  // Reload produk
+        } else {
+            alert('Gagal menghapus produk');
+        }
+    }
+
+    // Load produk saat halaman dimuat
+    loadProducts();
+</script>
+{% endblock %}

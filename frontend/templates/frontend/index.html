@@ -1,0 +1,53 @@
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+    <h1 class="fw-bolder text-center mb-4">Katalog Produk</h1>
+
+    <!-- Search Bar -->
+    <div class="mb-4 text-center">
+        <input 
+            type="text" 
+            id="search-bar" 
+            class="form-control w-50 mx-auto" 
+            placeholder="Cari produk..." 
+            onkeyup="filterProducts()">
+    </div>
+
+    <!-- Daftar Produk -->
+    <div class="row" id="product-list">
+        {% for product in products %}
+        <div class="col-md-4 mb-4 product-item">
+            <div class="card">
+                <img src="http://localhost:3000{{ product.image }}" class="card-img-top" alt="{{ product.name }}" width="300" height="300">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <h6 class="card-text"> {{ product.qty }} Produk</h6>
+                    <p class="fs-6"> {{ product.description }}</p>
+                    <p class="fs-6 fw-bold">Harga : Rp. {{ product.price }} /pcs</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Script untuk Filtering -->
+    <script>
+        function filterProducts() {
+            // Ambil input dari search bar
+            let input = document.getElementById('search-bar').value.toLowerCase();
+            
+            // Ambil semua elemen produk
+            let products = document.querySelectorAll('.product-item');
+            
+            // Iterasi untuk menampilkan atau menyembunyikan produk
+            products.forEach(product => {
+                let productName = product.querySelector('.card-title').textContent.toLowerCase();
+                if (productName.includes(input)) {
+                    product.style.display = 'block';
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+        }
+    </script>
+{% endblock %}
